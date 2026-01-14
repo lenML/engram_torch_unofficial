@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
-import math
-from typing import List, Optional
-from .config import EngramConfig
+from typing import List
 from collections import OrderedDict
 
 
@@ -34,10 +32,13 @@ class OffloadMultiHeadEmbedding(nn.Module):
         self,
         sizes: List[int],
         dim: int,
-        cache_size: int = sizes[0] // 2,
+        cache_size: int = -1,
         device: str = "cuda",
     ):
         super().__init__()
+
+        if cache_size == -1:
+            cache_size = sizes[0] // 2
 
         # offsets
         offsets = [0]

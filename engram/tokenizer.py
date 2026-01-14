@@ -27,7 +27,7 @@ class EngramTokenizer:
         config: EngramConfig,
         hf_tokenizer: PreTrainedTokenizer,
         layer_ids: List[int],
-        normalizer: normalizers.Sequence = None,
+        normalizer: normalizers.Sequence = DEFAULT_NORMALIZER,
     ):
         """
         config: EngramConfig 对象
@@ -38,7 +38,7 @@ class EngramTokenizer:
         self.cfg = config
         self.layer_ids = layer_ids
         self.tokenizer = hf_tokenizer
-        self.normalizer = normalizer or DEFAULT_NORMALIZER
+        self.normalizer = normalizer
 
         self.lookup_table = self._build_compression_table()
         self.compressed_vocab_size = int(self.lookup_table.max() + 1)

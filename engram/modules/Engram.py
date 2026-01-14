@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import math
-from typing import List, Optional
-from .config import EngramConfig
-from collections import OrderedDict
+from typing import List
+from ..config import EngramConfig
+from .MHE import MultiHeadEmbedding
 
 
 class EngramModule(nn.Module):
