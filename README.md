@@ -23,13 +23,13 @@ config = EngramConfig(
     seed=42,
 
     use_offload=False,
-    offload_cache_lines=1024
+    # offload_cache_lines=1024
 )
-layer_ids = [2, 6]  # gpt2 has 12 layers, we use layer 2 and 6 for testing
+layer_ids = [1, 5]  # gpt2 has 12 layers, we use layer[1] and layer[5] for testing
 engram_tokenizer = EngramTokenizer(config, hf_tokenizer, layer_ids=layer_ids)
 
-vocab_sizes_2 = engram_tokenizer.vocab_distributions[layer_ids[0]]
-engram_2 = EngramModule(config, vocab_sizes_2)
+vocab_sizes_1 = engram_tokenizer.vocab_distributions[layer_ids[0]]
+engram_1 = EngramModule(config, vocab_sizes_1)
 vocab_sizes_6 = engram_tokenizer.vocab_distributions[layer_ids[1]]
 engram_6 = EngramModule(config, vocab_sizes_6)
 ```
@@ -44,7 +44,7 @@ hf_tokenizer = AutoTokenizer.from_pretrained("gpt2")
 hf_config = AutoConfig.from_pretrained("gpt2")
 hf_model = AutoModel.from_pretrained("gpt2")
 
-layer_ids = [2, hf_config.num_hidden_layers // 2]
+layer_ids = [1, hf_config.num_hidden_layers // 2]
 hidden_size = 1024
 n_embed_per_ngram = 512
 n_head_per_ngram = 8

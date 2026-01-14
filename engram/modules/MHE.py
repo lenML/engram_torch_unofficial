@@ -43,6 +43,6 @@ class MultiHeadEmbedding(nn.Module):
         return embeds
 
     def preload(self, hash_ids: torch.Tensor):
-        if hasattr(self.embedding, "preload"):
+        if isinstance(self.embedding, OffloadEmbedding):
             flat_ids = hash_ids + self.offsets_buf
-            self.embedding.preload(flat_ids)
+            self.embedding._load_missing(flat_ids)
