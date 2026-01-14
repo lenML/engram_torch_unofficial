@@ -1,7 +1,7 @@
 # engram_torch_unofficial
 
 ```py
-from engram import EngramConfig, EngramTokenizer, EngramModule, ScalableEmbedding
+from engram import EngramConfig, EngramTokenizer, EngramModule
 from transformers import AutoTokenizer
 
 hf_tokenizer = AutoTokenizer.from_pretrained("gpt2")
@@ -46,7 +46,7 @@ max_ngram_size = 3
 kernel_size = 4
 
 model_params = sum(p.numel() for p in hf_model.parameters())
-target_params = model_params / 3
+target_params = model_params / 3 # 80% -> FFN | 20% -> engram
 num_layers = len(layer_ids)
 vocab_size = len(hf_tokenizer)
 num_orders = max_ngram_size - 1  # 2 orders: 2-gram, 3-gram
@@ -93,6 +93,37 @@ config = EngramConfig(
 )
 
 engram_tokenizer = EngramTokenizer(config, hf_tokenizer, layer_ids=layer_ids)
+
+```
+
+offload: LRU_cache in GPU, data in CPU
+
+```py
+from transformers import AutoTokenizer
+from engram import EngramConfig, EngramModule
+from engram import OffloadMultiHeadEmbedding
+from engram import EngramTokenizer
+
+engram_1 = EngramModule(EngramConfig(), 1000)
+offload_memory = OffloadMultiHeadEmbedding(
+    sizes=engram_1.memory.sizes,
+    dim=engram_1.memory.embedding.embedding_dim,
+    cache_size=engram_1.memory.sizes[0] // 2,
+)
+engram_1.memory = offload_memory
+```
+
+preload to GPU
+
+```py
+
+hf_tokenizer = AutoTokenizer.from_pretrained("gpt2")
+engram_tokenizer = EngramTokenizer(engram_1.cfg, hf_tokenizer, layer_ids=[2])
+
+text = "The quick brown fox jumps over the lazy dog"
+input_ids = hf_tokenizer(text, return_tensors="np")["input_ids"]
+hash_ids = engram_tokenizer.compress_and_hash(input_ids, layer_id=2)
+offload_memory.preload(hash_ids)
 
 ```
 

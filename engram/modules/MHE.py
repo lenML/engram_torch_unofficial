@@ -17,6 +17,8 @@ class MultiHeadEmbedding(nn.Module):
         total_size = sum(sizes)
         self.embedding = nn.Embedding(total_size, dim)
 
+        self.sizes = sizes
+
     def forward(
         self,
         # hash_ids: [B, L, Num_Heads]
@@ -61,6 +63,8 @@ class OffloadMultiHeadEmbedding(nn.Module):
         self.cache_index = {}  # global_id -> slot
         self.lru = OrderedDict()  # global_id -> None
         self.free_slots = list(range(cache_size))
+
+        self.sizes = sizes
 
     @torch.no_grad()
     def _evict_if_needed(self):
