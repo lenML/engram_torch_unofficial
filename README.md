@@ -59,21 +59,14 @@ class Block(nn.Module):
 
 
 class GPT(nn.Module):
-    def forward(self, idx: "torch.Tensor", hash_idx: "torch.Tensor", targets=None):
+    def forward(self, idx: "torch.Tensor", targets=None):
         x = self.wte(idx)
 
-        for block in self.blocks:
+        for block, layer_id in enumerate(self.transformer.h):
+            hash_idx = self.cfg.engram.tokenizer.compress_and_hash(idx, layer_id)
             x = block(x, hash_idx)
 
         # ...
-
-model = GPT()
-tok = AutoTokenizer.from_pretrained("gpt2")
-en_tok = EngramTokenizer(engram_cfg, tok)
-prompt = "hello, world"
-ids = tok(prompt, return_tensors="pt").input_ids
-hash_ids = en_tok.compress_and_hash(ids, return_tensors="pt")
-model.forward(ids, hash_ids)
 ```
 
 Estimating the optimal K value for pre-trained model
