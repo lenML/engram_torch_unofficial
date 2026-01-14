@@ -1,4 +1,8 @@
+![banner](https://raw.githubusercontent.com/deepseek-ai/Engram/refs/heads/main/figures/arch.png)
+
 # engram_torch_unofficial
+
+This repository contains the **unofficial** implementation for the paper: [Conditional Memory via Scalable Lookup: A New Axis of Sparsity for Large Language Models.](https://github.com/deepseek-ai/Engram/blob/main/Engram_paper.pdf)
 
 ```py
 from engram import EngramConfig, EngramTokenizer, EngramModule
