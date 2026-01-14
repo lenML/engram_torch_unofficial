@@ -24,3 +24,6 @@ class EngramConfig:
     # 系统参数
     pad_id: int = 2
     seed: int = 42
+
+    use_offload: Optional[bool] = False
+    offload_cache_lines: Optional[int] = None

@@ -19,7 +19,12 @@ class EngramModule(nn.Module):
         flat_sizes = [s for sublist in layer_vocab_sizes for s in sublist]
         self.embed_dim = config.n_embed_per_ngram // config.n_head_per_ngram
 
-        self.memory = MultiHeadEmbedding(sizes=flat_sizes, dim=self.embed_dim)
+        self.memory = MultiHeadEmbedding(
+            sizes=flat_sizes,
+            dim=self.embed_dim,
+            use_offload=config.use_offload,
+            offload_cache_lines=config.offload_cache_lines,
+        )
 
         # Engram 拼接后的总维度
         total_engram_dim = len(flat_sizes) * self.embed_dim

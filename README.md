@@ -21,6 +21,9 @@ config = EngramConfig(
     hc_mult=1,  # 1 for Dense model, 4 for DeepSeek-V3
     pad_id=hf_tokenizer.pad_token,
     seed=42,
+
+    use_offload=False,
+    offload_cache_lines=1024
 )
 layer_ids = [2, 6]  # gpt2 has 12 layers, we use layer 2 and 6 for testing
 engram_tokenizer = EngramTokenizer(config, hf_tokenizer, layer_ids=layer_ids)
@@ -97,37 +100,6 @@ config = EngramConfig(
 )
 
 engram_tokenizer = EngramTokenizer(config, hf_tokenizer, layer_ids=layer_ids)
-
-```
-
-offload: LRU_cache in GPU, data in CPU
-
-```py
-from transformers import AutoTokenizer
-from engram import EngramConfig, EngramModule
-from engram import OffloadMultiHeadEmbedding
-from engram import EngramTokenizer
-
-engram_1 = EngramModule(EngramConfig(), 1000)
-offload_memory = OffloadMultiHeadEmbedding(
-    sizes=engram_1.memory.sizes,
-    dim=engram_1.memory.embedding.embedding_dim,
-    cache_size=engram_1.memory.sizes[0] // 2,
-)
-engram_1.memory = offload_memory
-```
-
-preload to GPU
-
-```py
-
-hf_tokenizer = AutoTokenizer.from_pretrained("gpt2")
-engram_tokenizer = EngramTokenizer(engram_1.cfg, hf_tokenizer, layer_ids=[2])
-
-text = "The quick brown fox jumps over the lazy dog"
-input_ids = hf_tokenizer(text, return_tensors="np")["input_ids"]
-hash_ids = engram_tokenizer.compress_and_hash(input_ids, layer_id=2)
-offload_memory.preload(hash_ids)
 
 ```
 
