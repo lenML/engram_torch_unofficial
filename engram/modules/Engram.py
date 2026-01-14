@@ -3,35 +3,7 @@ import torch.nn as nn
 import math
 from typing import List, Optional
 from .config import EngramConfig
-
-
-class ScalableEmbedding(nn.Module):
-    """支持 CPU Offload 的巨型 Embedding"""
-
-    def __init__(self, sizes: List[int], dim: int):
-        super().__init__()
-        self.offsets = [0]
-        for s in sizes[:-1]:
-            self.offsets.append(self.offsets[-1] + s)
-        self.register_buffer(
-            "offsets_buf", torch.tensor(self.offsets, dtype=torch.long)
-        )
-
-        total_size = sum(sizes)
-        self.embedding = nn.Embedding(total_size, dim)
-
-    def forward(self, hash_ids: "torch.Tensor") -> "torch.Tensor":
-        # hash_ids: [B, L, Num_Heads]
-        device = hash_ids.device
-
-        # 加上偏移量，对应到总表中的绝对位置
-        flat_ids = hash_ids + self.offsets_buf.to(device)
-
-        embed_device = self.embedding.weight.device
-        flat_ids = flat_ids.to(embed_device)
-
-        embeds_cpu: "torch.Tensor" = self.embedding(flat_ids)
-        return embeds_cpu.to(device)
+from collections import OrderedDict
 
 
 class EngramModule(nn.Module):
@@ -47,7 +19,7 @@ class EngramModule(nn.Module):
         flat_sizes = [s for sublist in layer_vocab_sizes for s in sublist]
         self.embed_dim = config.n_embed_per_ngram // config.n_head_per_ngram
 
-        self.memory = ScalableEmbedding(sizes=flat_sizes, dim=self.embed_dim)
+        self.memory = MultiHeadEmbedding(sizes=flat_sizes, dim=self.embed_dim)
 
         # Engram 拼接后的总维度
         total_engram_dim = len(flat_sizes) * self.embed_dim
@@ -93,7 +65,11 @@ class EngramModule(nn.Module):
         nn.init.normal_(self.value_proj.weight, std=0.001)
         nn.init.zeros_(self.value_proj.bias)
 
-    def forward(self, hidden_states: "torch.Tensor", hash_ids: "torch.Tensor"):
+    def forward(
+        self,
+        hidden_states: "torch.Tensor",
+        hash_ids: "torch.Tensor",  # hash_ids: [B, L, Num_Heads]
+    ):
         """
         hidden_states: [B, L, D] (Dense) 或 [B, L, G, D] (DeepSeek)
         hash_ids: [B, L, Num_Heads] (预先计算好的)
