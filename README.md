@@ -34,6 +34,48 @@ vocab_sizes_6 = engram_tokenizer.vocab_distributions[layer_ids[1]]
 engram_6 = EngramModule(config, vocab_sizes_6)
 ```
 
+demo with GPT data flow
+
+```py
+
+class Block(nn.Module):
+    def __init__(self, cfg, layer_id: int):
+        super().__init__()
+        # ...
+
+        self.engram = None
+        if cfg.engram and layer_id in cfg.engram.layer_ids:
+            self.engram = EngramModule(
+                config=cfg.engram.cfg,
+                layer_vocab_sizes=cfg.engram.tokenizer.vocab_distributions[layer_id],
+            )
+
+    def forward(self, hs, hi):
+        if self.engram:
+            hs = self.engram(hs, hi) + hs
+        hs = hs + self.attn(self.ln1(hs))
+        hs = hs + self.mlp(self.ln2(hs))
+        return hs
+
+
+class GPT(nn.Module):
+    def forward(self, idx: "torch.Tensor", hash_idx: "torch.Tensor", targets=None):
+        x = self.wte(idx)
+
+        for block in self.blocks:
+            x = block(x, hash_idx)
+
+        # ...
+
+model = GPT()
+tok = AutoTokenizer.from_pretrained("gpt2")
+en_tok = EngramTokenizer(engram_cfg, tok)
+prompt = "hello, world"
+ids = tok(prompt, return_tensors="pt").input_ids
+hash_ids = en_tok.compress_and_hash(ids, return_tensors="pt")
+model.forward(ids, hash_ids)
+```
+
 Estimating the optimal K value for pre-trained model
 
 ```py
