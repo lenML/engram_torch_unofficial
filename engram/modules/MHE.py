@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from typing import List
 
-from engram.modules.embed import OffloadEmbedding
+from .embed import OffloadEmbedding
 
 
 class MultiHeadEmbedding(nn.Module):
