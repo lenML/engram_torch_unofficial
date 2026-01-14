@@ -25,11 +25,6 @@ vocab_sizes_2 = engram_tokenizer.vocab_distributions[layer_ids[0]]
 engram_2 = EngramModule(config, vocab_sizes_2)
 vocab_sizes_6 = engram_tokenizer.vocab_distributions[layer_ids[1]]
 engram_6 = EngramModule(config, vocab_sizes_6)
-
-# you can offload memory(embeddings) to cpu:
-engram_2.to("cuda")
-engram_2.memory.to("cpu")
-
 ```
 
 Estimating the optimal K value for pre-trained model
