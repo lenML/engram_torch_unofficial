@@ -51,7 +51,7 @@ class Block(nn.Module):
             )
 
     def forward(self, hs, hi):
-        if self.engram:
+        if self.engram and hi is not None:
             hs = self.engram(hs, hi) + hs
         hs = hs + self.attn(self.ln1(hs))
         hs = hs + self.mlp(self.ln2(hs))
@@ -62,8 +62,11 @@ class GPT(nn.Module):
     def forward(self, idx: "torch.Tensor", targets=None):
         x = self.wte(idx)
 
-        for block, layer_id in enumerate(self.transformer.h):
-            hash_idx = self.cfg.engram.tokenizer.compress_and_hash(idx, layer_id)
+        for layer_id, block in enumerate(self.transformer.h):
+            hash_idx = None
+            if layer_id in self.cfg.engram.layer_ids:
+                hash_idx = self.cfg.engram.tokenizer.compress_and_hash(idx, layer_id)
+                hash_idx = torch.tensor(hash_idx).to(device=x.device)
             x = block(x, hash_idx)
 
         # ...

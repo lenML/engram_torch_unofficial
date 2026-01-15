@@ -1,7 +1,8 @@
 import numpy as np
 from tokenizers import normalizers, Regex
+import torch
 from transformers import PreTrainedTokenizer
-from typing import List, Dict
+from typing import List, Dict, Union
 from .utils import find_next_prime
 from .config import EngramConfig
 
@@ -21,11 +22,22 @@ DEFAULT_NORMALIZER = normalizers.Sequence(
 )
 
 
+class AdapterTokenizer:
+    def decode(self, tokens: List[int], *args, **kwargs) -> str:
+        raise NotImplementedError
+
+    def convert_ids_to_tokens(self, ids: "List[int] | int", *args, **kwargs) -> str:
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
+
+
 class EngramTokenizer:
     def __init__(
         self,
         config: EngramConfig,
-        hf_tokenizer: PreTrainedTokenizer,
+        tokenizer: "PreTrainedTokenizer | AdapterTokenizer",
         layer_ids: List[int],
         normalizer: normalizers.Sequence = DEFAULT_NORMALIZER,
     ):
@@ -37,7 +49,7 @@ class EngramTokenizer:
         """
         self.cfg = config
         self.layer_ids = layer_ids
-        self.tokenizer = hf_tokenizer
+        self.tokenizer = tokenizer
         self.normalizer = normalizer
 
         self.lookup_table = self._build_compression_table()
@@ -118,6 +130,8 @@ class EngramTokenizer:
         输入: 原始 Token IDs [Batch, Seq] (Numpy)
         输出: 哈希索引 [Batch, Seq, Num_Heads] (Numpy)
         """
+        if isinstance(input_ids, torch.Tensor):
+            input_ids = input_ids.cpu().numpy()
         x = np.asarray(input_ids, dtype=np.int64)
         B, T = x.shape
 
